@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:zen_app/screens/menu/gallery_page.dart';
+import '../../services/api_service.dart';
+import '../../widgets/shimmer_widget.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({super.key});
@@ -10,62 +12,16 @@ class EventsPage extends StatefulWidget {
 
 class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final _apiService = ApiService();
+  bool _isLoading = true;
+  String? _error;
+  List<Map<String, dynamic>> _events = [];
   
-  final List<Map<String, dynamic>> _upcomingEvents = [
-    {
-      'title': 'National Karate Championship',
-      'date': '10-15 June 2023',
-      'location': 'Chennai Indoor Stadium',
-      'image': 'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg',
-      'description': 'Annual national level karate championship with participants from all over India.',
-    },
-    {
-      'title': 'Summer Training Camp',
-      'date': '1-10 May 2023',
-      'location': 'Zen Karate School HQ',
-      'image': 'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg',
-      'description': 'Intensive summer training camp for all belt levels. Special guest instructors from Japan.',
-    },
-    {
-      'title': 'Belt Exam',
-      'date': '25 April 2023',
-      'location': 'Zen Karate School HQ',
-      'image': 'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg',
-      'description': 'Quarterly belt exam for all students. Registration required.',
-    },
-  ];
-  
-  final List<Map<String, dynamic>> _pastEvents = [
-    {
-      'title': 'District Tournament',
-      'date': '15 March 2023',
-      'location': 'City Sports Complex',
-      'image': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHgWS4Cgbdo2uqVlSRgiS1vtgaZT-gAbNhhA&s',
-      'description': 'District level tournament where our school won 5 gold, 7 silver, and 3 bronze medals.',
-      'results': '12 Medals'
-    },
-    {
-      'title': 'International Workshop',
-      'date': '5-7 February 2023',
-      'location': 'Zen Karate School HQ',
-      'image': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHgWS4Cgbdo2uqVlSRgiS1vtgaZT-gAbNhhA&s',
-      'description': 'Three-day workshop conducted by Sensei Yamamoto from Japan.',
-      'results': '45 Participants'
-    },
-    {
-      'title': 'New Year Celebration',
-      'date': '1 January 2023',
-      'location': 'Zen Karate School HQ',
-      'image': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHgWS4Cgbdo2uqVlSRgiS1vtgaZT-gAbNhhA&s',
-      'description': 'Annual new year celebration with demonstrations and awards ceremony.',
-      'results': 'Successfully Completed'
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _loadEvents();
   }
 
   @override
@@ -74,11 +30,64 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
     super.dispose();
   }
 
+  Future<void> _loadEvents() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final response = await _apiService.getEvents();
+      
+      if (response['success'] == true) {
+        final events = List<Map<String, dynamic>>.from(response['data']);
+        setState(() {
+          _events = events;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = response['error'] ?? 'Failed to load events';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'An unexpected error occurred';
+        _isLoading = false;
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> get _upcomingEvents {
+    final now = DateTime.now();
+    // return _events.where((event) {
+    //   final eventDate = DateTime.parse(event['date'] as String? ?? '');
+    //   return eventDate.isAfter(now);
+    // }).toList();
+    return _events;
+  }
+
+  List<Map<String, dynamic>> get _pastEvents {
+    final now = DateTime.now();
+    // return _events.where((event) {
+    //   final eventDate = DateTime.parse(event['date'] as String? ?? '');
+    //   return eventDate.isBefore(now);
+    // }).toList();
+    return [];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Events'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadEvents,
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
@@ -92,16 +101,96 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
           ],
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     // Navigate to calendar view
-      //     ScaffoldMessenger.of(context).showSnackBar(
-      //       const SnackBar(content: Text('Calendar view coming soon')),
-      //     );
-      //   },
-      //   child: const Icon(Icons.calendar_month),
-      // ),
-      body: TabBarView(
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 3,
+        itemBuilder: (context, index) => Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const ShimmerWidget.rectangular(
+                height: 150,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const ShimmerWidget.rectangular(height: 24),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 16),
+                        const SizedBox(width: 4),
+                        ShimmerWidget.rectangular(height: 16, width: MediaQuery.of(context).size.width * 0.3),
+                        const SizedBox(width: 16),
+                        const Icon(Icons.location_on, size: 16),
+                        const SizedBox(width: 4),
+                        ShimmerWidget.rectangular(height: 16, width: MediaQuery.of(context).size.width * 0.3),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const ShimmerWidget.rectangular(height: 16),
+                    const SizedBox(height: 4),
+                    const ShimmerWidget.rectangular(height: 16),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ShimmerWidget.rectangular(height: 36, width: MediaQuery.of(context).size.width * 0.2),
+                        const SizedBox(width: 8),
+                        ShimmerWidget.rectangular(height: 36, width: MediaQuery.of(context).size.width * 0.2),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadEvents,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_events.isEmpty) {
+      return const Center(
+        child: Text('No events available'),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadEvents,
+      child: TabBarView(
         controller: _tabController,
         children: [
           _buildEventsList(_upcomingEvents, isUpcoming: true),
@@ -112,6 +201,15 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
   }
 
   Widget _buildEventsList(List<Map<String, dynamic>> events, {required bool isUpcoming}) {
+    if (events.isEmpty) {
+      return Center(
+        child: Text(
+          isUpcoming ? 'No upcoming events' : 'No past events',
+          style: const TextStyle(fontSize: 16),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: events.length,
@@ -129,10 +227,17 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                 child: Image.network(
-                  event['image'] as String,
+                  event['image'] as String? ?? 'https://zenkarateschoolofindia.com/images/logo.png',
                   height: 150,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 150,
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.event, size: 50),
+                    );
+                  },
                 ),
               ),
               Padding(
@@ -144,7 +249,7 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                       children: [
                         Expanded(
                           child: Text(
-                            event['title'] as String,
+                            event['title'] as String? ?? 'Untitled Event',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -159,7 +264,7 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              event['results'] as String,
+                              event['results'] as String? ?? '',
                               style: TextStyle(
                                 color: Theme.of(context).colorScheme.secondary,
                                 fontWeight: FontWeight.bold,
@@ -174,7 +279,7 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                         const Icon(Icons.calendar_today, size: 16),
                         const SizedBox(width: 4),
                         Text(
-                          event['date'] as String,
+                          event['date'] as String? ?? 'Date not specified',
                           style: TextStyle(color: Colors.grey[600]),
                         ),
                         const SizedBox(width: 16),
@@ -182,7 +287,7 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            event['location'] as String,
+                            event['location'] as String? ?? 'Location not specified',
                             style: TextStyle(color: Colors.grey[600]),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -192,7 +297,7 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      event['description'] as String,
+                      event['description'] as String? ?? 'No description available',
                       style: const TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 16),
@@ -222,9 +327,6 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                     else
                       TextButton.icon(
                         onPressed: () {
-                          // ScaffoldMessenger.of(context).showSnackBar(
-                          //   const SnackBar(content: Text('Photos coming soon')),
-                          // );
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) => const GalleryPage()),

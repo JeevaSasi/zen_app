@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../widgets/shimmer_widget.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -10,6 +11,7 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   late List<NotificationItem> _notifications;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -218,6 +220,54 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Notifications'),
+        ),
+        body: ListView.builder(
+          itemCount: 5,
+          itemBuilder: (context, index) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ShimmerWidget.circular(width: 44, height: 44),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ShimmerWidget.rectangular(
+                            width: MediaQuery.of(context).size.width * 0.4,
+                            height: 16,
+                          ),
+                          ShimmerWidget.rectangular(
+                            width: 40,
+                            height: 12,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const ShimmerWidget.rectangular(height: 14),
+                      const SizedBox(height: 4),
+                      ShimmerWidget.rectangular(
+                        width: MediaQuery.of(context).size.width * 0.6,
+                        height: 14,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final unreadCount = _notifications.where((n) => !n.isRead).length;
 
     return Scaffold(

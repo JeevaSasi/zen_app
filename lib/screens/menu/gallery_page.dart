@@ -1,69 +1,108 @@
 import 'package:flutter/material.dart';
+import '../../widgets/shimmer_widget.dart';
 
-class GalleryPage extends StatelessWidget {
+class GalleryPage extends StatefulWidget {
   const GalleryPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<String> galleryImages = [
-      'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg',
-      'https://www.shutterstock.com/image-illustration/karate-martial-arts-sports-silhouette-260nw-2128287515.jpg',
-      'https://www.shutterstock.com/shutterstock/photos/2116869461/display_1500/stock-vector-karate-logo-silhouette-with-brush-vector-2116869461.jpg',
-      'https://www.shutterstock.com/image-illustration/karate-martial-arts-sports-silhouette-260nw-2128287515.jpg',
-      'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg',
-      'https://www.shutterstock.com/shutterstock/photos/658599034/display_1500/stock-photo-a-young-martial-arts-master-knots-a-black-belt-close-up-image-with-the-effect-of-sunlight-658599034.jpg',
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHgWS4Cgbdo2uqVlSRgiS1vtgaZT-gAbNhhA&s',
-       'https://www.shutterstock.com/image-illustration/karate-martial-arts-sports-silhouette-260nw-2128287515.jpg',
-      'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg'
-    ];
+  State<GalleryPage> createState() => _GalleryPageState();
+}
 
+class _GalleryPageState extends State<GalleryPage> {
+  bool _isLoading = true;
+  final List<String> galleryImages = [
+    'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg',
+    'https://www.shutterstock.com/image-illustration/karate-martial-arts-sports-silhouette-260nw-2128287515.jpg',
+    'https://www.shutterstock.com/shutterstock/photos/2116869461/display_1500/stock-vector-karate-logo-silhouette-with-brush-vector-2116869461.jpg',
+    'https://www.shutterstock.com/image-illustration/karate-martial-arts-sports-silhouette-260nw-2128287515.jpg',
+    'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg',
+    'https://www.shutterstock.com/shutterstock/photos/658599034/display_1500/stock-photo-a-young-martial-arts-master-knots-a-black-belt-close-up-image-with-the-effect-of-sunlight-658599034.jpg',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHgWS4Cgbdo2uqVlSRgiS1vtgaZT-gAbNhhA&s',
+    'https://www.shutterstock.com/image-illustration/karate-martial-arts-sports-silhouette-260nw-2128287515.jpg',
+    'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImages();
+  }
+
+  Future<void> _loadImages() async {
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gallery'),
       ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1,
-        ),
-        itemCount: galleryImages.length,
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () {
-              // Open image in fullscreen
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => _FullScreenImage(
-                    imageUrl: galleryImages[index],
-                  ),
-                ),
-              );
-            },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                galleryImages[index],
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              (loadingProgress.expectedTotalBytes ?? 1)
-                          : null,
-                    ),
-                  );
-                },
-              ),
-            ),
-          );
-        },
+      body: _isLoading ? _buildShimmer() : _buildGallery(),
+    );
+  }
+
+  Widget _buildShimmer() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1,
       ),
+      itemCount: 6,
+      itemBuilder: (context, index) => const ShimmerWidget.rectangular(
+        height: double.infinity,
+      ),
+    );
+  }
+
+  Widget _buildGallery() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1,
+      ),
+      itemCount: galleryImages.length,
+      itemBuilder: (context, index) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => _FullScreenImage(
+                  imageUrl: galleryImages[index],
+                ),
+              ),
+            );
+          },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              galleryImages[index],
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Center(
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            (loadingProgress.expectedTotalBytes ?? 1)
+                        : null,
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }

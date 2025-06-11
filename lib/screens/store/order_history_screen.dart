@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/order.dart';
 import '../../data/mock_data.dart';
+import '../../widgets/shimmer_widget.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -33,13 +34,80 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Order History'),
-        
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? _buildShimmer()
           : _orders.isEmpty
               ? _buildEmptyState()
               : _buildOrderList(),
+    );
+  }
+
+  Widget _buildShimmer() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 5,
+      itemBuilder: (context, index) => Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ShimmerWidget.rectangular(
+                    width: MediaQuery.of(context).size.width * 0.3,
+                    height: 16,
+                  ),
+                  ShimmerWidget.rectangular(
+                    width: MediaQuery.of(context).size.width * 0.2,
+                    height: 16,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const ShimmerWidget.rectangular(
+                    width: 60,
+                    height: 60,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const ShimmerWidget.rectangular(height: 14),
+                        const SizedBox(height: 8),
+                        ShimmerWidget.rectangular(
+                          width: MediaQuery.of(context).size.width * 0.25,
+                          height: 14,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ShimmerWidget.rectangular(
+                    width: MediaQuery.of(context).size.width * 0.2,
+                    height: 14,
+                  ),
+                  const ShimmerWidget.rectangular(
+                    width: 80,
+                    height: 30,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

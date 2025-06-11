@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/cart.dart';
 import '../../data/mock_data.dart';
+import '../../widgets/shimmer_widget.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -11,11 +12,22 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   late Cart _cart;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _cart = MockData.cart;
+    _loadCart();
+  }
+
+  Future<void> _loadCart() async {
+    await Future.delayed(const Duration(seconds: 1));
+    if (mounted) {
+      setState(() {
+        _cart = MockData.cart;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -24,12 +36,73 @@ class _CartScreenState extends State<CartScreen> {
       appBar: AppBar(
         title: const Text('Shopping Cart'),
       ),
-      body: _cart.items.isEmpty
-          ? _buildEmptyCart()
-          : _buildCartList(),
-      bottomNavigationBar: _cart.items.isEmpty
+      body: _isLoading
+          ? _buildShimmer()
+          : _cart.items.isEmpty
+              ? _buildEmptyCart()
+              : _buildCartList(),
+      bottomNavigationBar: _isLoading || _cart.items.isEmpty
           ? null
           : _buildBottomBar(),
+    );
+  }
+
+  Widget _buildShimmer() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 3,
+      itemBuilder: (context, index) => Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            children: [
+              const ShimmerWidget.rectangular(
+                width: 80,
+                height: 80,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const ShimmerWidget.rectangular(height: 16),
+                    const SizedBox(height: 8),
+                    ShimmerWidget.rectangular(
+                      width: MediaQuery.of(context).size.width * 0.2,
+                      height: 14,
+                    ),
+                    const SizedBox(height: 8),
+                    ShimmerWidget.rectangular(
+                      width: MediaQuery.of(context).size.width * 0.15,
+                      height: 14,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                children: [
+                  const ShimmerWidget.circular(
+                    width: 32,
+                    height: 32,
+                  ),
+                  const SizedBox(height: 8),
+                  ShimmerWidget.rectangular(
+                    width: 20,
+                    height: 14,
+                  ),
+                  const SizedBox(height: 8),
+                  const ShimmerWidget.circular(
+                    width: 32,
+                    height: 32,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -38,9 +38,9 @@ class _HomeScreenState extends State<HomeScreen> {
       // Define screens based on admin status
       _screens = [
         const DashboardScreen(),
-        const AnalyticsScreen(),
-        const OrderHistoryScreen(),
-        const AchievementsScreen(),
+        // const AnalyticsScreen(),
+        // const OrderHistoryScreen(),
+        // const AchievementsScreen(),
         const MoreScreen(),
         if (_isAdmin) const AdminSettingsScreen(),
       ];
@@ -67,9 +67,9 @@ class _HomeScreenState extends State<HomeScreen> {
           physics: const NeverScrollableScrollPhysics(),
           children: _screens ?? [
             const DashboardScreen(),
-            const AnalyticsScreen(),
-            const OrderHistoryScreen(),
-            const AchievementsScreen(),
+            // const AnalyticsScreen(),
+            // const OrderHistoryScreen(),
+            // const AchievementsScreen(),
             const MoreScreen(),
           ],
           onPageChanged: (index) {
@@ -77,9 +77,10 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
         bottomNavigationBar: Padding(
-          padding: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.only(bottom: 5,left: 100,right: 100),
           child: CrystalNavigationBar(
             currentIndex: _currentIndex,
+            itemPadding: const EdgeInsets.all(6),
             onTap: (index) {
               setState(() {
                 _currentIndex = index;
@@ -94,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
             unselectedItemColor: Colors.grey,
             selectedItemColor: Theme.of(context).colorScheme.primary,
             backgroundColor: Colors.black,
-            borderRadius: 16,
+            borderRadius: 15,
             enableFloatingNavBar: true,
             outlineBorderColor: Colors.white.withOpacity(0.3),
             borderWidth: 1.5,
@@ -104,38 +105,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 unselectedIcon: Icons.home_outlined,
                 selectedColor: Theme.of(context).colorScheme.primary,
               ),
-              CrystalNavigationBarItem(
-                icon: Icons.analytics,
-                unselectedIcon: Icons.analytics_outlined,
-                selectedColor: Theme.of(context).colorScheme.primary,
-              ),
-               CrystalNavigationBarItem(
-                icon: Icons.shopping_cart,
-                unselectedIcon: Icons.shopping_cart_outlined,
-                selectedColor: Theme.of(context).colorScheme.primary,
-              ),
-              CrystalNavigationBarItem(
-                icon: Icons.emoji_events,
-                unselectedIcon: Icons.emoji_events_outlined,
-                selectedColor: Theme.of(context).colorScheme.primary,
-                badge:const Badge(
-                  label: Text(
-                    "3",
-                    style: TextStyle(color: Colors.white, fontSize: 10),
-                  ),
-                ),
-              ),
+              // CrystalNavigationBarItem(
+              //   icon: Icons.analytics,
+              //   unselectedIcon: Icons.analytics_outlined,
+              //   selectedColor: Theme.of(context).colorScheme.primary,
+              // ),
+              //  CrystalNavigationBarItem(
+              //   icon: Icons.shopping_cart,
+              //   unselectedIcon: Icons.shopping_cart_outlined,
+              //   selectedColor: Theme.of(context).colorScheme.primary,
+              // ),
+              // CrystalNavigationBarItem(
+              //   icon: Icons.emoji_events,
+              //   unselectedIcon: Icons.emoji_events_outlined,
+              //   selectedColor: Theme.of(context).colorScheme.primary,
+              //   badge:const Badge(
+              //     label: Text(
+              //       "3",
+              //       style: TextStyle(color: Colors.white, fontSize: 10),
+              //     ),
+              //   ),
+              // ),
               CrystalNavigationBarItem(
                 icon: Icons.more_horiz,
                 unselectedIcon: Icons.more_horiz_outlined,
                 selectedColor: Theme.of(context).colorScheme.primary,
               ),
-              if (_isAdmin)
-                CrystalNavigationBarItem(
-                  icon: Icons.admin_panel_settings,
-                  unselectedIcon: Icons.admin_panel_settings_outlined,
-                  selectedColor: Theme.of(context).colorScheme.primary,
-                ),
+              // if (_isAdmin)
+              //   CrystalNavigationBarItem(
+              //     icon: Icons.admin_panel_settings,
+              //     unselectedIcon: Icons.admin_panel_settings_outlined,
+              //     selectedColor: Theme.of(context).colorScheme.primary,
+              //   ),
             ],
           ),
         ),

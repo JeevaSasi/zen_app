@@ -1,57 +1,148 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
+import '../../widgets/shimmer_widget.dart';
 
-class TeamPage extends StatelessWidget {
+class TeamPage extends StatefulWidget {
   const TeamPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> teamMembers = [
-      {
-        'name': 'Sensei Karthikeyan Natarajan',
-        'role': 'Chief Instructor',
-        'dan': '7th Dan Black Belt',
-        'image': 'https://zenkarateschoolofindia.com/images/team/master.jpeg',
-        'description': 'Master Tanaka has over 30 years of experience in Karate and has won multiple international championships.',
-      },
-      {
-        'name': 'Sensei Dharsan Dayanand',
-        'role': 'Senior Instructor',
-        'dan': '5th Dan Black Belt',
-        'image': 'https://zenkarateschoolofindia.com/images/team/dharsan-dayanand.jpeg',
-        'description': 'Sensei Rani specializes in kata and has represented India in the Asian Games.',
-      },
-      {
-        'name': 'Sempei Pritheivraj Kartikeyan',
-        'role': 'Junior Instructor',
-        'dan': '3rd Dan Black Belt',
-        'image': 'https://zenkarateschoolofindia.com/images/team/pritheive.jpeg',
-        'description': 'Sensei Rajesh focuses on kumite training and has been with Zen Karate School for 10 years.',
-      },
-      {
-        'name': 'Jeeva Sasikumar',
-        'role': 'Assistant Instructor',
-        'dan': '2nd Dan Black Belt',
-        'image': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSB7_F4w3RB9F-dQBNCQ25P3GA6YOwxoVZJNQ&s',
-        'description': 'Arjun is a former national champion and specializes in training children.',
-      },
-      {
-        'name': 'Kavya',
-        'role': 'Assistant Instructor',
-        'dan': '1st Dan Black Belt',
-        'image': 'https://images.stockcake.com/public/6/9/c/69cdefee-f30b-483e-bd1c-438325484fb0_large/karate-girl-posing-stockcake.jpg',
-        'description': 'Priya joined the teaching team after winning the state championship three years in a row.',
-      },
-    ];
+  State<TeamPage> createState() => _TeamPageState();
+}
 
+class _TeamPageState extends State<TeamPage> {
+  final ApiService _apiService = ApiService();
+  List<Map<String, dynamic>> _teamMembers = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTeamMembers();
+  }
+
+  Future<void> _fetchTeamMembers() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final response = await _apiService.getTeamMembers();
+      
+      if (response['success'] == true) {
+        setState(() {
+          _teamMembers = List<Map<String, dynamic>>.from(response['data']);
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = response['error'] ?? 'Failed to fetch team members';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'An unexpected error occurred';
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Our Team'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchTeamMembers,
+          ),
+        ],
       ),
-      body: ListView.builder(
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: teamMembers.length,
+        itemCount: 5,
+        itemBuilder: (context, index) => Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ShimmerWidget.circular(width: 80, height: 80),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const ShimmerWidget.rectangular(height: 24),
+                      const SizedBox(height: 8),
+                      const ShimmerWidget.rectangular(height: 16),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 100,
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: const ShimmerWidget.rectangular(height: 16),
+                      ),
+                      const SizedBox(height: 8),
+                      const ShimmerWidget.rectangular(height: 16),
+                      const SizedBox(height: 4),
+                      const ShimmerWidget.rectangular(height: 16),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _error!,
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchTeamMembers,
+              child: const Text('Try Again'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_teamMembers.isEmpty) {
+      return const Center(
+        child: Text('No team members found'),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _fetchTeamMembers,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _teamMembers.length,
         itemBuilder: (context, index) {
-          final member = teamMembers[index];
+          final member = _teamMembers[index];
           return Card(
             margin: const EdgeInsets.only(bottom: 16),
             elevation: 4,
@@ -65,7 +156,10 @@ class TeamPage extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundImage: NetworkImage(member['image'] as String),
+                    child: Text(
+                      member['name'].toString().substring(0, 1).toUpperCase(),
+                      style: const TextStyle(fontSize: 24),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -96,7 +190,7 @@ class TeamPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            member['dan'] as String,
+                            member['grade'] as String,
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.primary,

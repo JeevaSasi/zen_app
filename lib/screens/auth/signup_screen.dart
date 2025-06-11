@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 
@@ -16,7 +17,9 @@ class _SignupScreenState extends State<SignupScreen> {
   final _mobileController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _apiService = ApiService();
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -48,14 +51,37 @@ class _SignupScreenState extends State<SignupScreen> {
     return null;
   }
 
-  void _handleSignup() {
+  void _handleSignup() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      // TODO: Implement signup logic
-      Future.delayed(const Duration(seconds: 2), () {
-        setState(() => _isLoading = false);
-        Navigator.pushReplacementNamed(context, '/login');
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
       });
+
+      final response = await _apiService.register(
+        fullName: _fullNameController.text.trim(),
+        email: _emailController.text.trim().toLowerCase(),
+        mobile: _mobileController.text.trim(),
+        password: _passwordController.text,
+      );
+
+        setState(() => _isLoading = false);
+
+      if (response['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response['message'] ?? 'Registration successful!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        Navigator.pushReplacementNamed(context, '/login');
+        }
+      } else {
+        setState(() {
+          _errorMessage = response['error'] ?? 'An error occurred. Please try again.';
+        });
+      }
     }
   }
 
@@ -83,12 +109,31 @@ class _SignupScreenState extends State<SignupScreen> {
                   width: double.infinity,
                   height: 50,
                 ),
-               
                 ),
-                 // const SizedBox(height: 32),
+                if (_errorMessage != null)
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    margin: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: Colors.red.shade900,
+                      ),
+                    ),
+                  ),
                 CustomTextField(
                   label: 'Full Name',
                   controller: _fullNameController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Full name is required';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 8),
                 CustomTextField(
@@ -99,8 +144,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Email is required';
                     }
-                    if (!value.contains('@')) {
-                      return 'Please enter a valid email';
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      return 'Please enter a valid email address';
                     }
                     return null;
                   },
@@ -110,6 +155,15 @@ class _SignupScreenState extends State<SignupScreen> {
                   label: 'Mobile Number',
                   controller: _mobileController,
                   keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Mobile number is required';
+                    }
+                    if (value.length != 10 || int.tryParse(value) == null) {
+                      return 'Please enter a valid 10-digit mobile number';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 8),
                 CustomTextField(

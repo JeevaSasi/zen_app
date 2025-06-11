@@ -40,6 +40,7 @@ class OrderSuccessScreen extends StatelessWidget {
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pushReplacementNamed(
                     context,

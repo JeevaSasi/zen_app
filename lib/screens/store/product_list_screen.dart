@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/product.dart';
 import '../../data/mock_data.dart';
+import '../../widgets/shimmer_widget.dart';
 
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
@@ -53,10 +54,51 @@ class _ProductListScreenState extends State<ProductListScreen> {
           _buildCategoryFilter(),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? _buildShimmer()
                 : _buildProductGrid(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildShimmer() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.75,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+      ),
+      itemCount: 6,
+      itemBuilder: (context, index) => Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const ShimmerWidget.rectangular(
+              height: 150,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const ShimmerWidget.rectangular(height: 16),
+                  const SizedBox(height: 8),
+                  ShimmerWidget.rectangular(
+                    width: MediaQuery.of(context).size.width * 0.2,
+                    height: 16,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

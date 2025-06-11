@@ -1,24 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/api_service.dart';
 import 'profile_screen.dart';
 import 'change_password_screen.dart';
 
-class MoreScreen extends StatelessWidget {
+class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
+
+  @override
+  State<MoreScreen> createState() => _MoreScreenState();
+}
+
+class _MoreScreenState extends State<MoreScreen> {
+  final _apiService = ApiService();
+  String _userName = '';
+  String _grade = '';
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('user_name') ?? 'User';
+      _grade = prefs.getString('grade') ?? 'Student';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-         title: const Text('App Settings',style: TextStyle(color: Colors.white,fontSize: 25,fontWeight: FontWeight.bold),),
+        title: const Text(
+          'App Settings',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 25,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: false,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Stack(
         children: [
-          _buildProfileCard(context),
-          const SizedBox(height: 24),
-          _buildMenuSection(context),
+          ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _buildProfileCard(context),
+              const SizedBox(height: 24),
+              _buildMenuSection(context),
+            ],
+          ),
+          if (_isLoading)
+            Container(
+              color: Colors.black26,
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
         ],
       ),
     );
@@ -44,17 +87,17 @@ class MoreScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Jeeva Sasikumar',
-                    style: TextStyle(
+                  Text(
+                    _userName,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Black Belt',
-                    style: TextStyle(
+                  Text(
+                    _grade,
+                    style: const TextStyle(
                       color: Colors.grey,
                     ),
                   ),
@@ -148,7 +191,6 @@ class MoreScreen extends StatelessWidget {
   }
   
   Future<void> _deactivate(BuildContext context) async {
-    // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -168,12 +210,11 @@ class MoreScreen extends StatelessWidget {
     );
     
     if (confirmed == true) {
-      // Clear shared preferences
+      // TODO: Implement deactivate API
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
       
       if (context.mounted) {
-        // Navigate to login screen
         Navigator.pushNamedAndRemoveUntil(
           context,
           '/login',
@@ -184,7 +225,6 @@ class MoreScreen extends StatelessWidget {
   }
 
   Future<void> _logout(BuildContext context) async {
-    // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -204,17 +244,27 @@ class MoreScreen extends StatelessWidget {
     );
     
     if (confirmed == true) {
-      // Clear shared preferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      setState(() => _isLoading = true);
+      
+      final response = await _apiService.logout();
+      
+      setState(() => _isLoading = false);
       
       if (context.mounted) {
-        // Navigate to login screen
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/login',
-          (route) => false,
-        );
+        if (response['success'] == true) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/login',
+            (route) => false,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response['error'] ?? 'Failed to logout. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }

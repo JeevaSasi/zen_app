@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:skeletonizer/skeletonizer.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../widgets/shimmer_widget.dart';
 import 'package:flutter_carousel_widget/flutter_carousel_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../notifications/notifications_screen.dart';
@@ -40,19 +41,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final prefs = await SharedPreferences.getInstance();
     final isAdmin = prefs.getBool('isAdmin') ?? false;
     final userMobile = prefs.getString('userMobile') ?? '';
-    
-    // Set a default name based on whether user is admin or not
-    String name = 'User';
-    if (isAdmin) {
-      name = 'Admin';
-    } else if (userMobile.isNotEmpty) {
-      // Use last 4 digits of phone number if available
-      name = userMobile.length > 4 ? 'User (${userMobile.substring(userMobile.length - 4)})' : 'User';
-    }
-    
+    final fullName = prefs.getString('full_name') ?? '';
+
+    String name = fullName.isEmpty ? 'User' : fullName;
+
     // Simulate API call
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (mounted) {
       setState(() {
         _isLoading = false;
@@ -144,26 +139,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           SliverToBoxAdapter(
-            child: Skeletonizer(
-              enabled: _isLoading,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildWelcomeSection(),
-                    const SizedBox(height: 16),
-                    if (_isAdmin) _buildActionButtons(),
-                    if (_isAdmin) const SizedBox(height: 16),
-                    _buildGallerySection(),
-                    const SizedBox(height: 16),
-                    _buildStoreCard(),
-                    const SizedBox(height: 16),
-                    _buildMenuGrids(),
-                  ],
-                ),
-              ),
-            ),
+            child: _isLoading 
+                ? _buildShimmerDashboard()
+                : Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildWelcomeSection(),
+                        const SizedBox(height: 16),
+                        if (_isAdmin)
+                          SizedBox(height: 70, child: _buildActionButtons()),
+                        if (_isAdmin) const SizedBox(height: 16),
+                        _buildGallerySection(),
+                        const SizedBox(height: 16),
+                        _buildMenuGrids(),
+                      ],
+                    ),
+                  ),
           ),
         ],
       ),
@@ -171,24 +164,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildActionButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return ListView(
+      shrinkWrap: true,
+      scrollDirection: Axis.horizontal,
       children: [
         _buildActionButton(
           Icons.add_circle_outline,
           'Add Event',
           () => Navigator.pushNamed(context, '/add-event'),
         ),
+        const SizedBox(width: 10),
         _buildActionButton(
           Icons.fitness_center_outlined,
           'Add Workout',
           () => Navigator.pushNamed(context, '/add-workout'),
         ),
+        const SizedBox(width: 10),
         _buildActionButton(
           Icons.person_add_outlined,
           'Add Member',
           () => Navigator.pushNamed(context, '/add-team-member'),
         ),
+        const SizedBox(width: 10),
         _buildActionButton(
           Icons.how_to_reg,
           'Mark Attendance',
@@ -199,7 +196,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildActionButton(IconData icon, String label, VoidCallback onTap) {
-    return InkWell(
+    return  InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
@@ -209,7 +206,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -287,17 +284,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'route': '/workouts',
       },
       {
-          'title': 'Our Centers',
-          'icon': Icons.location_on,
-          'color': Colors.purple,
-          'route': '/centers',
-        },
-        {
-          'title': 'Contact Us',
-          'icon': Icons.contact_phone,
-          'color': Colors.teal,
-          'route': '/contact',
-        },
+        'title': 'Our Centers',
+        'icon': Icons.location_on,
+        'color': Colors.purple,
+        'route': '/centers',
+      },
+      {
+        'title': 'Contact Us',
+        'icon': Icons.contact_phone,
+        'color': Colors.teal,
+        'route': '/contact',
+      },
       if (_isAdmin) ...[
         {
           'title': 'Add Product',
@@ -311,7 +308,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'color': Colors.orange,
           'route': '/manage-orders',
         },
-      ] ,
+      ],
     ];
 
     return GridView.builder(
@@ -359,6 +356,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
+                      overflow: TextOverflow.ellipsis,
                       item['title'] as String,
                       style: const TextStyle(
                         color: Colors.white,
@@ -521,11 +519,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'Shop for karate gear and accessories',
-                          style: TextStyle(
-                            color: Colors.black.withOpacity(0.9),
-                            fontSize: 14,
+                        Expanded(
+                          child: Text(
+                            'Shop for karate gear and accessories',
+                            style: TextStyle(
+                              color: Colors.black.withOpacity(0.9),
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ],
@@ -773,6 +773,81 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   borderData: FlBorderData(show: false),
                 ),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerDashboard() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Welcome Section
+            const ShimmerWidget.rectangular(width: 200, height: 32),
+            const SizedBox(height: 4),
+            const ShimmerWidget.rectangular(width: 250, height: 20),
+            const SizedBox(height: 16),
+            
+            // Admin Action Buttons (if admin)
+            if (_isAdmin) ...[
+              SizedBox(
+                height: 70,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 4,
+                  separatorBuilder: (context, index) => const SizedBox(width: 10),
+                  itemBuilder: (context, index) {
+                    return Container(
+                      width: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            
+            // Gallery Section
+            const ShimmerWidget.rectangular(width: 100, height: 24),
+            const SizedBox(height: 16),
+            Container(
+              height: 180,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Menu Grids
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 1.5,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: _isAdmin ? 8 : 6,
+              itemBuilder: (context, index) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                );
+              },
             ),
           ],
         ),

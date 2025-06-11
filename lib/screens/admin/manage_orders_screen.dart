@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/order.dart';
 import '../../data/mock_data.dart';
+import '../../widgets/shimmer_widget.dart';
 
 class ManageOrdersScreen extends StatefulWidget {
   const ManageOrdersScreen({super.key});
@@ -49,12 +50,89 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
           _buildStatusFilter(),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _orders.isEmpty
+                ? _buildShimmer()
+                : _filteredOrders.isEmpty
                     ? _buildEmptyState()
                     : _buildOrderList(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildShimmer() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 5,
+      itemBuilder: (context, index) => Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ShimmerWidget.rectangular(
+                    width: MediaQuery.of(context).size.width * 0.3,
+                    height: 16,
+                  ),
+                  const ShimmerWidget.rectangular(
+                    width: 100,
+                    height: 24,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const ShimmerWidget.rectangular(
+                    width: 60,
+                    height: 60,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const ShimmerWidget.rectangular(height: 14),
+                        const SizedBox(height: 8),
+                        ShimmerWidget.rectangular(
+                          width: MediaQuery.of(context).size.width * 0.25,
+                          height: 14,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ShimmerWidget.rectangular(
+                    width: MediaQuery.of(context).size.width * 0.2,
+                    height: 14,
+                  ),
+                  Row(
+                    children: [
+                      const ShimmerWidget.rectangular(
+                        width: 80,
+                        height: 32,
+                      ),
+                      const SizedBox(width: 8),
+                      const ShimmerWidget.rectangular(
+                        width: 80,
+                        height: 32,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -78,7 +156,6 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
               selected: isSelected,
               onSelected: (selected) {
                 setState(() => _selectedStatus = status);
-                // TODO: Implement status filtering
               },
               backgroundColor: Theme.of(context).cardColor,
               selectedColor: Theme.of(context).colorScheme.primary,

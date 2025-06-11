@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/api_service.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 
@@ -15,6 +16,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _mobileController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  final _apiService = ApiService();
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -25,24 +28,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      
-      // Check if user is admin
-      final isAdmin = _mobileController.text.trim() == '9600993995';
-      
-      // Save login status and user type to SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isLoggedIn', true);
-      await prefs.setBool('isAdmin', isAdmin);
-      await prefs.setString('userMobile', _mobileController.text.trim());
-      
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final response = await _apiService.login(
+        _mobileController.text.trim(),
+        _passwordController.text,
+      );
       
       setState(() => _isLoading = false);
       
+      if (response['success'] == true) {
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/home');
+        }
+      } else {
+        setState(() {
+          _errorMessage = response['error'] ?? 'An error occurred. Please try again.';
+        });
       }
     }
   }
@@ -60,7 +65,6 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // const SizedBox(height: 40),
                 Image.asset(
                   isDarkMode
                       ? 'assets/images/dark_logo.jpeg'
@@ -68,13 +72,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 150,
                   height: 150,
                 ),
-                // const SizedBox(height: 32),
                 const Text(
                   'Welcome to Zen Karate School of India',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -87,17 +89,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   textAlign: TextAlign.left,
                 ),
                 const SizedBox(height: 24),
+                if (_errorMessage != null)
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: Colors.red.shade900,
+                      ),
+                    ),
+                  ),
                 CustomTextField(
-                  label: 'Mobile Number',
+                  label: 'Email/ Mobile Number',
                   controller: _mobileController,
-                  keyboardType: TextInputType.phone,
+                  keyboardType: TextInputType.text,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your mobile number';
+                      return 'Please enter your email/ mobile number';
                     }
-                    if (value.length != 10 || int.tryParse(value) == null) {
-                      return 'Please enter a valid 10-digit mobile number';
-                    }
+                   
                     return null;
                   },
                 ),
@@ -116,7 +131,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ),
-                // const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -131,7 +145,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: _handleLogin,
                   isLoading: _isLoading,
                 ),
-                // const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:skeletonizer/skeletonizer.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../widgets/shimmer_widget.dart';
 
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
@@ -133,10 +134,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           ),
         ],
       ),
-      body: Skeletonizer(
-        enabled: _isLoading,
-        child: _buildAchievementsList(),
-      ),
+      body: _isLoading 
+          ? _buildShimmerAchievements()
+          : _buildAchievementsList(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           // TODO: Implement add achievement
@@ -515,6 +515,97 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       default:
         return Icons.emoji_events;
     }
+  }
+
+  Widget _buildShimmerAchievements() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 3,
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Card(
+            elevation: 3,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image placeholder
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: Container(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Level and medal badges
+                      Row(
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 60,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Title
+                      const ShimmerWidget.rectangular(
+                        width: double.infinity,
+                        height: 24,
+                      ),
+                      const SizedBox(height: 8),
+                      // Description
+                      const ShimmerWidget.rectangular(
+                        width: double.infinity,
+                        height: 40,
+                      ),
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      // Footer
+                      Row(
+                        children: [
+                          const ShimmerWidget.circular(width: 32, height: 32),
+                          const SizedBox(width: 8),
+                          const ShimmerWidget.rectangular(width: 100, height: 16),
+                          const Spacer(),
+                          const ShimmerWidget.rectangular(width: 80, height: 16),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

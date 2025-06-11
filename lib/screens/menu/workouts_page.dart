@@ -1,68 +1,108 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
+import '../../widgets/shimmer_widget.dart';
 
-class WorkoutsPage extends StatelessWidget {
+class WorkoutsPage extends StatefulWidget {
   const WorkoutsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> workouts = [
-      {
-        'title': 'Beginner Kata Practice',
-        'duration': '30 minutes',
-        'level': 'Beginner',
-        'description': 'Learn and practice fundamental kata movements including blocks, punches, and stances.',
-        'image': 'https://zenkarateschoolofindia.com/images/logo.png',
-      },
-      {
-        'title': 'Kumite Drills',
-        'duration': '45 minutes',
-        'level': 'Intermediate',
-        'description': 'Practice sparring techniques with a partner, focusing on timing, distance, and control.',
-        'image': 'https://zenkarateschoolofindia.com/images/logo.png',
-      },
-      {
-        'title': 'Advanced Kata',
-        'duration': '1 hour',
-        'level': 'Advanced',
-        'description': 'Work on advanced kata forms with complex movements and transitions.',
-        'image': 'https://zenkarateschoolofindia.com/images/logo.png',
-      },
-      {
-        'title': 'Strength & Conditioning',
-        'duration': '45 minutes',
-        'level': 'All Levels',
-        'description': 'Build strength, endurance, and flexibility with exercises tailored for karate practitioners.',
-        'image': 'https://zenkarateschoolofindia.com/images/logo.png',
-      },
-      {
-        'title': 'Self-Defense Techniques',
-        'duration': '1 hour',
-        'level': 'Intermediate',
-        'description': 'Learn practical self-defense applications from traditional karate techniques.',
-        'image': 'https://zenkarateschoolofindia.com/images/logo.png',
-      },
-    ];
+  State<WorkoutsPage> createState() => _WorkoutsPageState();
+}
 
+class _WorkoutsPageState extends State<WorkoutsPage> {
+  final _apiService = ApiService();
+  bool _isLoading = true;
+  String? _error;
+  List<Map<String, dynamic>> _workouts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWorkouts();
+  }
+
+  Future<void> _loadWorkouts() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final response = await _apiService.getWorkouts();
+      
+      if (response['success'] == true) {
+        setState(() {
+          _workouts = List<Map<String, dynamic>>.from(response['data']);
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _error = response['error'] ?? 'Failed to load workouts';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'An unexpected error occurred';
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Workouts'),
         actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.filter_list),
-          //   onPressed: () {
-          //     // Show filter dialog
-          //     ScaffoldMessenger.of(context).showSnackBar(
-          //       const SnackBar(content: Text('Filters coming soon')),
-          //     );
-          //   },
-          // ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadWorkouts,
+          ),
         ],
       ),
-      body: ListView.builder(
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const ShimmerList(itemCount: 5);
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadWorkouts,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_workouts.isEmpty) {
+      return const Center(
+        child: Text('No workouts available'),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadWorkouts,
+      child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: workouts.length,
+        itemCount: _workouts.length,
         itemBuilder: (context, index) {
-          final workout = workouts[index];
+          final workout = _workouts[index];
           return Card(
             margin: const EdgeInsets.only(bottom: 16),
             elevation: 4,
@@ -85,10 +125,18 @@ class WorkoutsPage extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
-                        workout['image'] as String,
+                        workout['image'] as String? ?? 'https://zenkarateschoolofindia.com/images/logo.png',
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 80,
+                            height: 80,
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.fitness_center),
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -97,7 +145,7 @@ class WorkoutsPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            workout['title'] as String,
+                            workout['name'] as String? ?? 'Untitled Workout',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -113,7 +161,7 @@ class WorkoutsPage extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                workout['duration'] as String,
+                                workout['time'] as String? ?? 'N/A',
                                 style: TextStyle(
                                   color: Colors.grey[600],
                                   fontSize: 14,
@@ -123,13 +171,13 @@ class WorkoutsPage extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: _getLevelColor(workout['level'] as String).withOpacity(0.2),
+                                  color: _getLevelColor(workout['level'] as String? ?? 'All Levels').withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  workout['level'] as String,
+                                  workout['level'] as String? ?? 'All Levels',
                                   style: TextStyle(
-                                    color: _getLevelColor(workout['level'] as String),
+                                    color: _getLevelColor(workout['level'] as String? ?? 'All Levels'),
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -139,7 +187,7 @@ class WorkoutsPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            workout['description'] as String,
+                            workout['description'] as String? ?? 'No description available',
                             style: const TextStyle(fontSize: 14),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -171,12 +219,12 @@ class WorkoutsPage extends StatelessWidget {
   }
 
   Color _getLevelColor(String level) {
-    switch (level) {
-      case 'Beginner':
+    switch (level.toLowerCase()) {
+      case 'beginner':
         return Colors.green;
-      case 'Intermediate':
+      case 'intermediate':
         return Colors.orange;
-      case 'Advanced':
+      case 'advanced':
         return Colors.red;
       default:
         return Colors.blue;
