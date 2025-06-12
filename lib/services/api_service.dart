@@ -417,7 +417,7 @@ class ApiService {
     required String addressLine1,
     required String addressLine2,
     required String city,
-    required int stateId,
+    required String stateId,
     required int countryId,
     required int pincode,
     required String dateOfBirth,

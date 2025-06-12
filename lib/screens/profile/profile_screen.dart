@@ -99,13 +99,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           addressLine1: _addressLine1Controller.text,
           addressLine2: _addressLine2Controller.text,
           city: _cityController.text,
-          stateId: int.parse(_stateIdController.text),
-          countryId: int.parse(_countryIdController.text),
+          stateId:_stateIdController.text,
+          countryId: 1,
+          // countryId: int.parse(_countryIdController.text),
           pincode: int.parse(_pincodeController.text),
           dateOfBirth: _dobController.text,
           passportNumber: _passportController.text,
           bloodGroup: _bloodGroupController.text,
         );
+
+        
 
         if (response['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -182,6 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(height: 16),
                         _buildGenderSelection(),
+                        const SizedBox(height: 16),
                         _buildTextField(
                           label: 'Date of Birth',
                           controller: _dobController,
@@ -224,33 +228,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           },
                         ),
                         _buildTextField(
-                          label: 'State ID',
+                          label: 'State',
                           controller: _stateIdController,
-                          keyboardType: TextInputType.number,
+                          keyboardType: TextInputType.text,
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'State ID is required';
+                            if (value == null || value.isEmpty ) {
+                              return 'State is required';
                             }
-                            if (int.tryParse(value) == null) {
-                              return 'Please enter a valid state ID';
+                            if(value.length <= 2){
+                              return 'State  must be 2 digits';
                             }
+                            // if (int.tryParse(value) == null) {
+                            //   return 'Please enter a valid state ID';
+                            // }
                             return null;
                           },
                         ),
-                        _buildTextField(
-                          label: 'Country ID',
-                          controller: _countryIdController,
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Country ID is required';
-                            }
-                            if (int.tryParse(value) == null) {
-                              return 'Please enter a valid country ID';
-                            }
-                            return null;
-                          },
-                        ),
+                        // const SizedBox(height: 16),
+                        // const Text('Country',style: TextStyle(fontSize: 16,),textAlign: TextAlign.left,),
+                        // const SizedBox(height: 8),
+                        // const Row(
+                        //   children: [
+                        //     Expanded(child: Text('India',style: TextStyle(fontSize: 16,fontWeight: FontWeight.bold),)),
+                        //   ],
+                        // ),
+                        // _buildTextField(
+                        //   label: 'Country',
+                        //   controller: _countryIdController,
+                        //   keyboardType: TextInputType.text,
+                        //   validator: (value) {
+                        //     if (value == null || value.isEmpty) {
+                        //       return 'Country ID is required';
+                        //     }
+                        //     if (int.tryParse(value) == null) {
+                        //       return 'Please enter a valid country ID';
+                        //     }
+                        //     return null;
+                        //   },
+                        // ),
                         _buildTextField(
                           label: 'PIN Code',
                           controller: _pincodeController,
@@ -403,48 +418,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'Gender',
           style: TextStyle(fontSize: 16),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
-              child: RadioListTile<int>(
-                title: const Text('Male'),
+              child: _buildGenderButton(
+                icon: Icons.male,
+                label: 'Male',
                 value: 1,
-                groupValue: _selectedGender,
-                onChanged: _isEditing
-                    ? (value) {
-                        setState(() => _selectedGender = value!);
-                      }
-                    : null,
               ),
             ),
+            const SizedBox(width: 12),
             Expanded(
-              child: RadioListTile<int>(
-                title: const Text('Female'),
+              child: _buildGenderButton(
+                icon: Icons.female,
+                label: 'Female',
                 value: 2,
-                groupValue: _selectedGender,
-                onChanged: _isEditing
-                    ? (value) {
-                        setState(() => _selectedGender = value!);
-                      }
-                    : null,
               ),
             ),
+            const SizedBox(width: 12),
             Expanded(
-              child: RadioListTile<int>(
-                title: const Text('Others'),
+              child: _buildGenderButton(
+                icon: Icons.transgender,
+                label: 'Others',
                 value: 3,
-                groupValue: _selectedGender,
-                onChanged: _isEditing
-                    ? (value) {
-                        setState(() => _selectedGender = value!);
-                      }
-                    : null,
               ),
             ),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildGenderButton({
+    required IconData icon,
+    required String label,
+    required int value,
+  }) {
+    final isSelected = _selectedGender == value;
+    final theme = Theme.of(context);
+    
+    return InkWell(
+      onTap: _isEditing
+          ? () {
+              setState(() => _selectedGender = value);
+            }
+          : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? theme.colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+          border: Border.all(
+            color: isSelected ? theme.colorScheme.primary : Colors.grey[300]!,
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? theme.colorScheme.primary : Colors.grey[600],
+              size: 28,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? theme.colorScheme.primary : Colors.grey[600],
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
