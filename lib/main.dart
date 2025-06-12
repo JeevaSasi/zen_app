@@ -30,7 +30,8 @@ import 'screens/admin/manage_orders_screen.dart';
 import 'screens/store/payment_screen.dart';
 import 'utils/theme.dart';
 
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 

@@ -77,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
         bottomNavigationBar: Padding(
-          padding: const EdgeInsets.only(bottom: 5,left: 100,right: 100),
+          padding: const EdgeInsets.only(bottom: 5,left: 80,right: 80),
           child: CrystalNavigationBar(
             currentIndex: _currentIndex,
             itemPadding: const EdgeInsets.all(6),
