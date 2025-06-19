@@ -241,7 +241,7 @@ class _CentersPageState extends State<CentersPage> {
                             const Icon(Icons.phone, size: 16, color: Colors.grey),
                             const SizedBox(width: 4),
                             Text(
-                              center['phone'] as String? ?? 'Phone not specified',
+                              center['contact_number'] as String? ?? 'Phone not specified',
                               style: TextStyle(
                                 color: Colors.grey[700],
                                 fontSize: 14,
@@ -256,7 +256,7 @@ class _CentersPageState extends State<CentersPage> {
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                center['classes'] as String? ?? 'Class schedule not specified',
+                                center['timing'] as String? ?? 'Class schedule not specified',
                                 style: TextStyle(
                                   color: Colors.grey[700],
                                   fontSize: 14,
@@ -271,7 +271,7 @@ class _CentersPageState extends State<CentersPage> {
                             const Icon(Icons.people, size: 16, color: Colors.grey),
                             const SizedBox(width: 4),
                             Text(
-                              '${center['instructors'] ?? 0} Instructors',
+                              '${center['instructor_count'] ?? 0} Instructors',
                               style: TextStyle(
                                 color: Colors.grey[700],
                                 fontSize: 14,
