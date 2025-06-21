@@ -61,20 +61,18 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
 
   List<Map<String, dynamic>> get _upcomingEvents {
     final now = DateTime.now();
-    // return _events.where((event) {
-    //   final eventDate = DateTime.parse(event['date'] as String? ?? '');
-    //   return eventDate.isAfter(now);
-    // }).toList();
-    return _events;
+    return _events.where((event) {
+      final eventDate = DateTime.parse(event['event_date'] as String? ?? '');
+      return eventDate.isAfter(now);
+    }).toList();
   }
 
   List<Map<String, dynamic>> get _pastEvents {
     final now = DateTime.now();
-    // return _events.where((event) {
-    //   final eventDate = DateTime.parse(event['date'] as String? ?? '');
-    //   return eventDate.isBefore(now);
-    // }).toList();
-    return [];
+    return _events.where((event) {
+      final eventDate = DateTime.parse(event['event_date'] as String? ?? '');
+      return eventDate.isBefore(now);
+    }).toList();
   }
 
   @override
@@ -249,7 +247,7 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                       children: [
                         Expanded(
                           child: Text(
-                            event['title'] as String? ?? 'Untitled Event',
+                            event['name'] as String? ?? 'Untitled Event',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -301,40 +299,41 @@ class _EventsPageState extends State<EventsPage> with SingleTickerProviderStateM
                       style: const TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 16),
-                    if (isUpcoming)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          OutlinedButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Event details coming soon')),
-                              );
-                            },
-                            child: const Text('Details'),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Registration coming soon')),
-                              );
-                            },
-                            child: const Text('Register'),
-                          ),
-                        ],
-                      )
-                    else
-                      TextButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const GalleryPage()),
-                          );
-                        },
-                        icon: const Icon(Icons.photo_library),
-                        label: const Text('View Photos'),
-                      ),
+                  //   if (isUpcoming)
+                  //     Row(
+                  //       mainAxisAlignment: MainAxisAlignment.end,
+                  //       children: [
+                  //         OutlinedButton(
+                  //           onPressed: () {
+                  //             ScaffoldMessenger.of(context).showSnackBar(
+                  //               const SnackBar(content: Text('Event details coming soon')),
+                  //             );
+                  //           },
+                  //           child: const Text('Details'),
+                  //         ),
+                  //         const SizedBox(width: 8),
+                  //         ElevatedButton(
+                  //           onPressed: () {
+                  //             ScaffoldMessenger.of(context).showSnackBar(
+                  //               const SnackBar(content: Text('Registration coming soon')),
+                  //             );
+                  //           },
+                  //           child: const Text('Register'),
+                  //         ),
+                  //       ],
+                  //     )
+                  //   else
+                  //     TextButton.icon(
+                  //       onPressed: () {
+                  //         Navigator.push(
+                  //           context,
+                  //           MaterialPageRoute(builder: (context) => const GalleryPage()),
+                  //         );
+                  //       },
+                  //       icon: const Icon(Icons.photo_library),
+                  //       label: const Text('View Photos'),
+                  //     ),
+                  // ],
                   ],
                 ),
               ),

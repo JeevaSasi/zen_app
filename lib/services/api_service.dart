@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:math';
 
 class ApiService {
   static const String baseUrl = 'https://www.zenkarateschoolofindia.com/zen-app/api';
@@ -445,6 +446,74 @@ class ApiService {
 
       if (response.statusCode == 200) {
         return jsonDecode(response.data);
+      }
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        error: 'Invalid response from server',
+      );
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout) {
+        return {
+          'success': false,
+          'error': 'Connection timeout. Please try again.',
+        };
+      }
+      return {
+        'success': false,
+        'error': e.response?.data?['error'] ?? 'Something went wrong. Please try again.',
+      };
+    }
+  }
+
+  Future<List<String>> getGalleryImages() async {
+    try {
+      final response = await _dio.post('/gallery/list-files.php');
+
+      if (response.statusCode == 200) {
+        final data = (response.data);
+        if (data['success'] == true) {
+          final List<String> images = List<String>.from(data['data']);
+          return images;
+        }
+      }
+      return [];
+    } on DioException catch (e) {
+      print('Error fetching gallery images: ${e.message}');
+      return [];
+    } catch (e) {
+      print('Unexpected error fetching gallery images: $e');
+      return [];
+    }
+  }
+
+  List<String> getRandomImages(List<String> images, int count) {
+    if (images.length <= count) return images;
+    
+    final random = Random();
+    final List<String> randomImages = [];
+    final List<String> tempImages = List.from(images);
+    
+    for (var i = 0; i < count; i++) {
+      final index = random.nextInt(tempImages.length);
+      randomImages.add(tempImages[index]);
+      tempImages.removeAt(index);
+    }
+    
+    return randomImages;
+  }
+
+  Future<Map<String, dynamic>> getAchievements() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final sessionId = prefs.getString('session_id');
+      
+      final response = await _dio.post('/achievements/get-achievements.php', data: {
+        'session_id': sessionId,
+      });
+
+      if (response.statusCode == 200) {
+        return response.data;
       }
       throw DioException(
         requestOptions: response.requestOptions,

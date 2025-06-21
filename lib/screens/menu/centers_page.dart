@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../widgets/shimmer_widget.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CentersPage extends StatefulWidget {
   const CentersPage({super.key});
@@ -283,26 +284,23 @@ class _CentersPageState extends State<CentersPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            OutlinedButton.icon(
-                              onPressed: () {
-                                // Navigate to map
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Map view coming soon')),
-                                );
-                              },
-                              icon: const Icon(Icons.map),
-                              label: const Text('VIEW MAP'),
-                            ),
-                            const SizedBox(width: 8),
+                            // OutlinedButton.icon(
+                            //   onPressed: () {
+                            //     // Navigate to map
+                            //     ScaffoldMessenger.of(context).showSnackBar(
+                            //       const SnackBar(content: Text('Map view coming soon')),
+                            //     );
+                            //   },
+                            //   icon: const Icon(Icons.map),
+                            //   label: const Text('VIEW MAP'),
+                            // ),
+                            // const SizedBox(width: 8),
                             FilledButton.icon(
                               onPressed: () {
                                 // Call center
-                                final phone = center['phone'] as String?;
+                                final phone = center['contact_number'].toString().trim();
                                 if (phone != null && phone.isNotEmpty) {
-                                  // TODO: Implement phone call functionality
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Calling $phone')),
-                                  );
+                                  launchUrl(Uri.parse('tel:$phone'));
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text('Phone number not available')),

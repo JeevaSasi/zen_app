@@ -15,6 +15,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isEditing = false;
   bool _isSaving = false;
   final _apiService = ApiService();
+  final Map<String, String> _apiDateFormats = {}; // Store API date formats
 
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
@@ -58,7 +59,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _fullNameController.text = userData['full_name'] ?? '';
           _selectedGender = userData['gender'] ?? 1;
-          _dobController.text = userData['date_of_birth'] ?? '';
+          
+          // Handle date format conversion for display
+          final apiDate = userData['date_of_birth'] ?? '';
+          if (apiDate.isNotEmpty) {
+            final dateParts = apiDate.split('-');
+            if (dateParts.length == 3) {
+              final displayDate = "${dateParts[2]}-${dateParts[1]}-${dateParts[0]}";
+              _dobController.text = displayDate;
+              _apiDateFormats['dob'] = apiDate; // Store API format
+            } else {
+              _dobController.text = apiDate;
+              _apiDateFormats['dob'] = apiDate;
+            }
+          }
+          
           _addressLine1Controller.text = userData['address_line_1'] ?? '';
           _addressLine2Controller.text = userData['address_line_2'] ?? '';
           _cityController.text = userData['city'] ?? '';
@@ -94,21 +109,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _isSaving = true);
       try {
         final response = await _apiService.updateProfile(
-          fullName: _fullNameController.text,
+          fullName: _fullNameController.text.trim(),
           gender: _selectedGender,
-          addressLine1: _addressLine1Controller.text,
-          addressLine2: _addressLine2Controller.text,
-          city: _cityController.text,
-          stateId:_stateIdController.text,
+          addressLine1: _addressLine1Controller.text.trim(),
+          addressLine2: _addressLine2Controller.text.trim(),
+          city: _cityController.text.trim(),
+          stateId: _stateIdController.text.trim(),
           countryId: 1,
-          // countryId: int.parse(_countryIdController.text),
-          pincode: int.parse(_pincodeController.text),
-          dateOfBirth: _dobController.text,
-          passportNumber: _passportController.text,
-          bloodGroup: _bloodGroupController.text,
+          pincode: int.parse(_pincodeController.text.trim()),
+          dateOfBirth: _apiDateFormats['dob'] ?? _dobController.text.trim(),
+          passportNumber: _passportController.text.trim(),
+          bloodGroup: _bloodGroupController.text.trim(),
         );
-
-        
 
         if (response['success'] == true) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -186,14 +198,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 16),
                         _buildGenderSelection(),
                         const SizedBox(height: 16),
-                        _buildTextField(
+                        _buildDateField(
                           label: 'Date of Birth',
                           controller: _dobController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Date of birth is required';
                             }
-                            // Add date format validation if needed
                             return null;
                           },
                         ),
@@ -290,9 +301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           label: 'Passport Number',
                           controller: _passportController,
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Passport number is required';
-                            }
+                            // Passport is now optional
                             return null;
                           },
                         ),
@@ -405,9 +414,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
           labelText: label,
           border: const OutlineInputBorder(),
         ),
+        validator: validator != null 
+          ? (value) => validator(value?.trim())
+          : null,
+        onChanged: (value) {
+          // Remove any extra spaces between words while typing
+          if (value.contains('  ')) {
+            final newValue = value.replaceAll(RegExp(r'\s+'), ' ');
+            controller.value = TextEditingValue(
+              text: newValue,
+              selection: TextSelection.collapsed(offset: newValue.length),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildDateField({
+    required String label,
+    required TextEditingController controller,
+    String? Function(String?)? validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: controller,
+        enabled: _isEditing,
+        readOnly: true,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          suffixIcon: _isEditing ? IconButton(
+            icon: const Icon(Icons.calendar_today),
+            onPressed: () async {
+              final DateTime? picked = await showDatePicker(
+                context: context,
+                initialDate: controller.text.isNotEmpty 
+                    ? _parseDisplayDate(controller.text) 
+                    : DateTime.now(),
+                firstDate: DateTime(1900),
+                lastDate: DateTime.now(),
+              );
+              if (picked != null) {
+                // Update display format (dd-mm-yyyy)
+                final displayDate = "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}";
+                // Store API format (yyyy-mm-dd)
+                final apiDate = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                setState(() {
+                  controller.text = displayDate;
+                  _apiDateFormats['dob'] = apiDate; // Store API format
+                });
+              }
+            },
+          ) : null,
+        ),
         validator: validator,
       ),
     );
+  }
+
+  DateTime _parseDisplayDate(String date) {
+    try {
+      final parts = date.split('-');
+      if (parts.length == 3) {
+        return DateTime(
+          int.parse(parts[2]), // year
+          int.parse(parts[1]), // month
+          int.parse(parts[0]), // day
+        );
+      }
+    } catch (e) {
+      // Handle parsing error
+    }
+    return DateTime.now();
   }
 
   Widget _buildGenderSelection() {
@@ -568,14 +648,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                  children: List.generate(2, (index) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Column(
+                  children: List.generate(2, (index) => const Padding(
+                    padding:  EdgeInsets.only(bottom: 16),
+                    child:  Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const ShimmerWidget.rectangular(width: 100, height: 16),
-                        const SizedBox(height: 8),
-                        const ShimmerWidget.rectangular(height: 50),
+                         ShimmerWidget.rectangular(width: 100, height: 16),
+                         SizedBox(height: 8),
+                         ShimmerWidget.rectangular(height: 50),
                       ],
                     ),
                   )),

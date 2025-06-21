@@ -40,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const DashboardScreen(),
         // const AnalyticsScreen(),
         // const OrderHistoryScreen(),
-        // const AchievementsScreen(),
+        const AchievementsScreen(),
         const MoreScreen(),
         if (_isAdmin) const AdminSettingsScreen(),
       ];
@@ -69,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const DashboardScreen(),
             // const AnalyticsScreen(),
             // const OrderHistoryScreen(),
-            // const AchievementsScreen(),
+            const AchievementsScreen(),
             const MoreScreen(),
           ],
           onPageChanged: (index) {
@@ -115,17 +115,17 @@ class _HomeScreenState extends State<HomeScreen> {
               //   unselectedIcon: Icons.shopping_cart_outlined,
               //   selectedColor: Theme.of(context).colorScheme.primary,
               // ),
-              // CrystalNavigationBarItem(
-              //   icon: Icons.emoji_events,
-              //   unselectedIcon: Icons.emoji_events_outlined,
-              //   selectedColor: Theme.of(context).colorScheme.primary,
-              //   badge:const Badge(
-              //     label: Text(
-              //       "3",
-              //       style: TextStyle(color: Colors.white, fontSize: 10),
-              //     ),
-              //   ),
-              // ),
+              CrystalNavigationBarItem(
+                icon: Icons.emoji_events,
+                unselectedIcon: Icons.emoji_events_outlined,
+                selectedColor: Theme.of(context).colorScheme.primary,
+                // badge:const Badge(
+                //   label: Text(
+                //     "3",
+                //     style: TextStyle(color: Colors.white, fontSize: 10),
+                //   ),
+                // ),
+              ),
               CrystalNavigationBarItem(
                 icon: Icons.more_horiz,
                 unselectedIcon: Icons.more_horiz_outlined,

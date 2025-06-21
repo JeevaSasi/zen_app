@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../widgets/shimmer_widget.dart';
+import '../../services/api_service.dart';
 
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
@@ -13,65 +14,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   bool _isLoading = true;
   String _selectedFilter = 'All';
   String _selectedUser = 'All Users';
+  final ApiService _apiService = ApiService();
   
   // List of achievement data
-  final List<Map<String, dynamic>> _achievements = [
-    {
-      'id': 1,
-      'title': 'World Karate Championship 2024',
-      'description': 'Won gold medal in kata competition at the World Karate Championship 2024 held in Tokyo, Japan.',
-      'level': 'International',
-      'medal': 'Gold',
-      'date': 'March 15, 2024',
-      'student': 'John Doe',
-      'colorIndex': 0,
-      'icon': Icons.sports_martial_arts,
-    },
-    {
-      'id': 2,
-      'title': 'National Karate Tournament',
-      'description': 'Secured silver medal in kumite competition at the National Championship.',
-      'level': 'National',
-      'medal': 'Silver',
-      'date': 'February 22, 2024',
-      'student': 'Emma Smith',
-      'colorIndex': 1,
-      'icon': Icons.emoji_events,
-    },
-    {
-      'id': 3,
-      'title': 'State Karate Competition',
-      'description': 'Won bronze medal in team kata at the State Championship.',
-      'level': 'State',
-      'medal': 'Bronze',
-      'date': 'January 12, 2024',
-      'student': 'Mike Johnson',
-      'colorIndex': 2,
-      'icon': Icons.military_tech,
-    },
-    {
-      'id': 4,
-      'title': 'International Youth Championship',
-      'description': 'Achieved gold medal in under-18 kumite category at the International Youth Championship.',
-      'level': 'International',
-      'medal': 'Gold',
-      'date': 'December 10, 2023',
-      'student': 'Sarah Williams',
-      'colorIndex': 3,
-      'icon': Icons.sports_kabaddi,
-    },
-    {
-      'id': 5,
-      'title': 'District Tournament',
-      'description': 'Won first place in beginners category at the District Tournament.',
-      'level': 'District',
-      'medal': 'Gold',
-      'date': 'November 5, 2023',
-      'student': 'David Lee',
-      'colorIndex': 4,
-      'icon': Icons.fitness_center,
-    },
-  ];
+  List<Map<String, dynamic>> _achievements = [];
   
   // Colors for achievement backgrounds
   final List<Color> _achievementColors = [
@@ -92,13 +38,28 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   }
 
   Future<void> _loadData() async {
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      setState(() {
-        _filteredAchievements = List.from(_achievements);
-        _isLoading = false;
-      });
+    try {
+      final response = await _apiService.getAchievements();
+      if (mounted) {
+        setState(() {
+          if (response['success'] == true) {
+            _achievements = List<Map<String, dynamic>>.from(response['data']);
+            _filteredAchievements = List.from(_achievements);
+          }
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load achievements. Please try again later.'),
+          ),
+        );
+      }
     }
   }
   
@@ -106,7 +67,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     setState(() {
       _filteredAchievements = _achievements.where((achievement) {
         bool levelMatch = _selectedFilter == 'All' || achievement['level'] == _selectedFilter;
-        bool userMatch = _selectedUser == 'All Users' || achievement['student'] == _selectedUser;
+        bool userMatch = _selectedUser == 'All Users' || achievement['won_by'] == _selectedUser;
         return levelMatch && userMatch;
       }).toList();
     });
@@ -137,17 +98,14 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       body: _isLoading 
           ? _buildShimmerAchievements()
           : _buildAchievementsList(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Implement add achievement
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Add Achievement'),
-      ),
     );
   }
 
   void _showFilterBottomSheet(BuildContext context) {
+    // Get unique levels and users from achievements
+    final levels = _achievements.map((a) => a['level'] as String).toSet().toList();
+    final users = _achievements.map((a) => a['won_by'] as String).toSet().toList();
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -196,10 +154,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     spacing: 8,
                     children: [
                       _buildFilterChip('All', setState),
-                      _buildFilterChip('District', setState),
-                      _buildFilterChip('State', setState),
-                      _buildFilterChip('National', setState),
-                      _buildFilterChip('International', setState),
+                      ...levels.map((level) => _buildFilterChip(level, setState)),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -214,11 +169,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     spacing: 8,
                     children: [
                       _buildUserChip('All Users', setState),
-                      _buildUserChip('John Doe', setState),
-                      _buildUserChip('Emma Smith', setState),
-                      _buildUserChip('Mike Johnson', setState),
-                      _buildUserChip('Sarah Williams', setState),
-                      _buildUserChip('David Lee', setState),
+                      ...users.map((user) => _buildUserChip(user, setState)),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -303,19 +254,24 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _isLoading ? 3 : _filteredAchievements.length,
+      itemCount: _filteredAchievements.length,
       itemBuilder: (context, index) {
-        final achievement = _isLoading ? {} : _filteredAchievements[index];
-        final colorIndex = _isLoading ? 0 : (achievement['colorIndex'] as int? ?? 0) % _achievementColors.length;
-        final icon = _isLoading ? Icons.emoji_events : (achievement['icon'] as IconData? ?? Icons.emoji_events);
+        final achievement = _filteredAchievements[index];
+        final colorIndex = index % _achievementColors.length;
         
         Color medalColor;
-        if (achievement['medal'] == 'Gold') {
-          medalColor = Colors.amber;
-        } else if (achievement['medal'] == 'Silver') {
-          medalColor = Colors.grey.shade300;
-        } else {
-          medalColor = Colors.brown.shade300;
+        switch (achievement['medal_type']) {
+          case 'Gold':
+            medalColor = Colors.amber;
+            break;
+          case 'Silver':
+            medalColor = Colors.grey.shade300;
+            break;
+          case 'Bronze':
+            medalColor = Colors.brown.shade300;
+            break;
+          default:
+            medalColor = Colors.grey.shade300;
         }
         
         return Card(
@@ -348,7 +304,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         // Icon
                         Center(
                           child: Icon(
-                            icon,
+                            Icons.emoji_events,
                             size: 80,
                             color: Colors.white.withOpacity(0.8),
                           ),
@@ -370,13 +326,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  _getLevelIcon(achievement['level'] ?? 'District'),
+                                  _getLevelIcon(achievement['level']),
                                   size: 16,
                                   color: Colors.white,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  _isLoading ? 'International' : achievement['level'],
+                                  achievement['level'],
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -409,7 +365,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            _isLoading ? 'International' : achievement['level'],
+                            achievement['level'],
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.onPrimary,
                               fontSize: 12,
@@ -428,7 +384,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            _isLoading ? 'Gold' : achievement['medal'],
+                            achievement['medal_type'],
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
@@ -440,7 +396,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      _isLoading ? 'World Karate Championship 2024' : achievement['title'],
+                      achievement['tournament_name'],
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -448,9 +404,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _isLoading 
-                          ? 'Won gold medal in kata competition at the World Karate Championship 2024 held in Tokyo, Japan.' 
-                          : achievement['description'],
+                      achievement['description'],
                       style: TextStyle(
                         color: Colors.grey[700],
                         height: 1.3,
@@ -464,7 +418,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                           radius: 16,
                           backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                           child: Text(
-                            _isLoading ? 'J' : achievement['student'][0],
+                            achievement['won_by'][0],
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.bold,
@@ -473,7 +427,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _isLoading ? 'John Doe' : achievement['student'],
+                          achievement['won_by'],
                           style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
                         const Spacer(),
@@ -484,7 +438,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          _isLoading ? 'March 15, 2024' : achievement['date'],
+                          achievement['tournament_date'],
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 13,

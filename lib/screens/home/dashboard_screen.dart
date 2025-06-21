@@ -6,7 +6,7 @@ import 'package:flutter_carousel_widget/flutter_carousel_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../notifications/notifications_screen.dart';
 import '../notifications/add_notification_screen.dart';
-
+import '../../services/api_service.dart';
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -21,14 +21,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _selectedMedalFilter = 'All';
   String _selectedAttendanceFilter = 'Month';
   String _userName = 'User';
+  final ApiService _apiService = ApiService();
 
-  final List<String> _galleryImages = [
-    'https://www.shutterstock.com/image-illustration/karate-martial-arts-sports-silhouette-260nw-2128287515.jpg',
-    'https://www.shutterstock.com/shutterstock/photos/2116869461/display_1500/stock-vector-karate-logo-silhouette-with-brush-vector-2116869461.jpg',
-    'https://www.shutterstock.com/shutterstock/photos/658599034/display_1500/stock-photo-a-young-martial-arts-master-knots-a-black-belt-close-up-image-with-the-effect-of-sunlight-658599034.jpg',
-    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHgWS4Cgbdo2uqVlSRgiS1vtgaZT-gAbNhhA&s',
-    'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg'
-  ];
+  final List<String> _galleryImages = [];
 
   @override
   void initState() {
@@ -37,23 +32,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _loadData() async {
-    // Load user data from SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    final isAdmin = prefs.getBool('isAdmin') ?? false;
-    final userMobile = prefs.getString('userMobile') ?? '';
-    final fullName = prefs.getString('full_name') ?? '';
+    try {
+      setState(() => _isLoading = true);
 
-    String name = fullName.isEmpty ? 'User' : fullName;
+      // Load user data from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final isAdmin = prefs.getBool('isAdmin') ?? false;
+      final userMobile = prefs.getString('userMobile') ?? '';
+      final fullName = prefs.getString('full_name') ?? '';
+      String name = fullName.isEmpty ? 'User' : fullName;
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+      // Load gallery images
+      final allImages = await _apiService.getGalleryImages();
+      final randomImages = _apiService.getRandomImages(allImages, 5);
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-        _isAdmin = isAdmin;
-        _userName = name;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isAdmin = isAdmin;
+          _userName = name;
+          _galleryImages.clear();
+          _galleryImages.addAll(randomImages);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -62,87 +67,87 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            automaticallyImplyLeading: false,
-            floating: true,
-            snap: true,
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-            elevation: 0,
-            centerTitle: false,
-            title: Text(
-              'Home',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 25,
-              ),
-            ),
-            actions: [
-              if (_isAdmin)
-                IconButton(
-                  icon: Icon(
-                    Icons.add_alert,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  tooltip: 'Add Notification',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddNotificationScreen(),
-                      ),
-                    );
-                  },
-                ),
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.notifications,
-                        color: Theme.of(context).colorScheme.primary),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NotificationsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  if (_notificationCount > 0)
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          '$_notificationCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
+          // SliverAppBar(
+          //   automaticallyImplyLeading: false,
+          //   floating: true,
+          //   snap: true,
+          //   backgroundColor: Theme.of(context).colorScheme.secondary,
+          //   elevation: 0,
+          //   centerTitle: false,
+          //   title: Text(
+          //     'Home',
+          //     style: TextStyle(
+          //       color: Theme.of(context).colorScheme.primary,
+          //       fontWeight: FontWeight.bold,
+          //       fontSize: 25,
+          //     ),
+          //   ),
+          //   actions: [
+          //     if (_isAdmin)
+          //       IconButton(
+          //         icon: Icon(
+          //           Icons.add_alert,
+          //           color: Theme.of(context).colorScheme.primary,
+          //         ),
+          //         tooltip: 'Add Notification',
+          //         onPressed: () {
+          //           Navigator.push(
+          //             context,
+          //             MaterialPageRoute(
+          //               builder: (context) => const AddNotificationScreen(),
+          //             ),
+          //           );
+          //         },
+          //       ),
+          //     // Stack(
+          //     //   alignment: Alignment.center,
+          //     //   children: [
+          //     //     IconButton(
+          //     //       icon: Icon(Icons.notifications,
+          //     //           color: Theme.of(context).colorScheme.primary),
+          //     //       onPressed: () {
+          //     //         Navigator.push(
+          //     //           context,
+          //     //           MaterialPageRoute(
+          //     //             builder: (context) => const NotificationsScreen(),
+          //     //           ),
+          //     //         );
+          //     //       },
+          //     //     ),
+          //     //     if (_notificationCount > 0)
+          //     //       Positioned(
+          //     //         top: 10,
+          //     //         right: 10,
+          //     //         child: Container(
+          //     //           padding: const EdgeInsets.all(2),
+          //     //           decoration: BoxDecoration(
+          //     //             color: Colors.red,
+          //     //             borderRadius: BorderRadius.circular(10),
+          //     //           ),
+          //     //           constraints: const BoxConstraints(
+          //     //             minWidth: 16,
+          //     //             minHeight: 16,
+          //     //           ),
+          //     //           child: Text(
+          //     //             '$_notificationCount',
+          //     //             style: const TextStyle(
+          //     //               color: Colors.white,
+          //     //               fontSize: 10,
+          //     //               fontWeight: FontWeight.bold,
+          //     //             ),
+          //     //             textAlign: TextAlign.center,
+          //     //           ),
+          //     //         ),
+          //     //       ),
+          //     //   ],
+          //     // ),
+          //   ],
+          // ),
           SliverToBoxAdapter(
             child: _isLoading 
                 ? _buildShimmerDashboard()
                 : Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.only(left: 16, right: 16, top: 48),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

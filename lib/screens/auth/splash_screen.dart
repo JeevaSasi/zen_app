@@ -82,27 +82,27 @@ class _SplashScreenState extends State<SplashScreen> {
             const SizedBox(height: 24),
             
             // Karate Quote
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
-                _selectedQuote,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontStyle: FontStyle.italic,
-                  shadows: [
-                    Shadow(
-                      offset: Offset(0, 1),
-                      blurRadius: 3,
-                      color: Color.fromRGBO(0, 0, 0, 0.3),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 32),
+            //   child: Text(
+            //     _selectedQuote,
+            //     textAlign: TextAlign.center,
+            //     style: const TextStyle(
+            //       color: Colors.white,
+            //       fontSize: 16,
+            //       fontStyle: FontStyle.italic,
+            //       shadows: [
+            //         Shadow(
+            //           offset: Offset(0, 1),
+            //           blurRadius: 3,
+            //           color: Color.fromRGBO(0, 0, 0, 0.3),
+            //         ),
+            //       ],
+            //     ),
+            //   ),
+            // ),
             
-            const SizedBox(height: 40),
+            // const SizedBox(height: 40),
             
             // Loading indicator
             const CircularProgressIndicator(

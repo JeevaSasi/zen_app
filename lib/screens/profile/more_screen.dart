@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/api_service.dart';
 import 'profile_screen.dart';
 import 'change_password_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
@@ -14,7 +15,6 @@ class MoreScreen extends StatefulWidget {
 class _MoreScreenState extends State<MoreScreen> {
   final _apiService = ApiService();
   String _userName = '';
-  String _grade = '';
   bool _isLoading = false;
 
   @override
@@ -26,8 +26,7 @@ class _MoreScreenState extends State<MoreScreen> {
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userName = prefs.getString('user_name') ?? 'User';
-      _grade = prefs.getString('grade') ?? 'Student';
+      _userName = prefs.getString('full_name') ?? 'User';
     });
   }
 
@@ -94,14 +93,7 @@ class _MoreScreenState extends State<MoreScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _grade,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.person),
                     label: const Text('View Profile'),
@@ -159,16 +151,17 @@ class _MoreScreenState extends State<MoreScreen> {
                 title: const Text('Terms & Conditions'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
-                  // TODO: Navigate to Terms & Conditions
+                  //launch url
+                  launchUrl(Uri.parse('https://www.zenkarateschoolofindia.com/terms-conditions.html'));
                 },
               ),
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.rule_outlined),
-                title: const Text('Rules & Regulations'),
+                title: const Text('Data & Privacy Policy'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
-                  // TODO: Navigate to Rules & Regulations
+                  launchUrl(Uri.parse('https://www.zenkarateschoolofindia.com/privacy-policy.html'));
                 },
               ),
               const Divider(height: 1),
@@ -202,7 +195,13 @@ class _MoreScreenState extends State<MoreScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => {ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Your account will be deactivated after 30 days of inactivity.'),
+              ),
+            ),
+            Navigator.pop(context, true),
+            },
             child: const Text('Deactivate'),
           ),
         ],

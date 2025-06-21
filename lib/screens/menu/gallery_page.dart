@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/shimmer_widget.dart';
+import '../../services/api_service.dart';
 
 class GalleryPage extends StatefulWidget {
   const GalleryPage({super.key});
@@ -10,17 +11,8 @@ class GalleryPage extends StatefulWidget {
 
 class _GalleryPageState extends State<GalleryPage> {
   bool _isLoading = true;
-  final List<String> galleryImages = [
-    'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg',
-    'https://www.shutterstock.com/image-illustration/karate-martial-arts-sports-silhouette-260nw-2128287515.jpg',
-    'https://www.shutterstock.com/shutterstock/photos/2116869461/display_1500/stock-vector-karate-logo-silhouette-with-brush-vector-2116869461.jpg',
-    'https://www.shutterstock.com/image-illustration/karate-martial-arts-sports-silhouette-260nw-2128287515.jpg',
-    'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg',
-    'https://www.shutterstock.com/shutterstock/photos/658599034/display_1500/stock-photo-a-young-martial-arts-master-knots-a-black-belt-close-up-image-with-the-effect-of-sunlight-658599034.jpg',
-    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHgWS4Cgbdo2uqVlSRgiS1vtgaZT-gAbNhhA&s',
-    'https://www.shutterstock.com/image-illustration/karate-martial-arts-sports-silhouette-260nw-2128287515.jpg',
-    'https://karate.news/wp-content/uploads/2023/05/image-36.jpeg'
-  ];
+  final List<String> _galleryImages = [];
+  final _apiService = ApiService();
 
   @override
   void initState() {
@@ -29,9 +21,24 @@ class _GalleryPageState extends State<GalleryPage> {
   }
 
   Future<void> _loadImages() async {
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      setState(() => _isLoading = false);
+    try {
+      setState(() => _isLoading = true);
+      final images = await _apiService.getGalleryImages();
+      
+      if (mounted) {
+        setState(() {
+          _galleryImages.clear();
+          _galleryImages.addAll(images);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          // Show error state if needed
+        });
+      }
     }
   }
 
@@ -40,6 +47,12 @@ class _GalleryPageState extends State<GalleryPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gallery'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadImages,
+          ),
+        ],
       ),
       body: _isLoading ? _buildShimmer() : _buildGallery(),
     );
@@ -62,47 +75,65 @@ class _GalleryPageState extends State<GalleryPage> {
   }
 
   Widget _buildGallery() {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1,
-      ),
-      itemCount: galleryImages.length,
-      itemBuilder: (context, index) {
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => _FullScreenImage(
-                  imageUrl: galleryImages[index],
-                ),
-              ),
-            );
-          },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              galleryImages[index],
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Center(
-                  child: CircularProgressIndicator(
-                    value: loadingProgress.expectedTotalBytes != null
-                        ? loadingProgress.cumulativeBytesLoaded /
-                            (loadingProgress.expectedTotalBytes ?? 1)
-                        : null,
+    if (_galleryImages.isEmpty) {
+      return const Center(
+        child: Text('No images available'),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadImages,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1,
+        ),
+        itemCount: _galleryImages.length,
+        itemBuilder: (context, index) {
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => _FullScreenImage(
+                    imageUrl: _galleryImages[index],
                   ),
-                );
-              },
+                ),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                _galleryImages[index],
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[200],
+                    child: const Icon(
+                      Icons.error_outline,
+                      color: Colors.grey,
+                    ),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              (loadingProgress.expectedTotalBytes ?? 1)
+                          : null,
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

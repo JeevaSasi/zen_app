@@ -156,9 +156,27 @@ class _TeamPageState extends State<TeamPage> {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    child: Text(
-                      member['name'].toString().substring(0, 1).toUpperCase(),
-                      style: const TextStyle(fontSize: 24),
+                    backgroundColor: Colors.grey[200],
+                    child: ClipOval(
+                      child: Image.network(
+                        member['profile_image'],
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.person,
+                            size: 40,
+                            color: Colors.grey,
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -167,7 +185,7 @@ class _TeamPageState extends State<TeamPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          member['name'] as String,
+                          member['name'].toString().trim(),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -175,7 +193,7 @@ class _TeamPageState extends State<TeamPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          member['role'] as String,
+                          member['role'].toString().trim(),
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -190,7 +208,7 @@ class _TeamPageState extends State<TeamPage> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            member['grade'] as String,
+                            member['grade'].toString().trim(),
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.primary,
@@ -200,7 +218,7 @@ class _TeamPageState extends State<TeamPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          member['description'] as String,
+                          member['description'].toString().trim(),
                           style: const TextStyle(fontSize: 14),
                         ),
                       ],
