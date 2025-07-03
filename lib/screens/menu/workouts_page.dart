@@ -193,18 +193,18 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () {
-                                // Start workout
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Workout will start soon')),
-                                );
-                              },
-                              child: const Text('START WORKOUT'),
-                            ),
-                          ),
+                          // Align(
+                          //   alignment: Alignment.centerRight,
+                          //   child: TextButton(
+                          //     onPressed: () {
+                          //       // Start workout
+                          //       ScaffoldMessenger.of(context).showSnackBar(
+                          //         const SnackBar(content: Text('Workout will start soon')),
+                          //       );
+                          //     },
+                          //     child: const Text('START WORKOUT'),
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),

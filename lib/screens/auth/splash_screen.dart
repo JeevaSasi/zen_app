@@ -58,15 +58,8 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       body: Container(
         width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.primary,
-            ],
-          ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -74,8 +67,8 @@ class _SplashScreenState extends State<SplashScreen> {
             // GIF Image
             Image.asset(
               'assets/images/logo.jpeg',
-              width: 300,
-              height: 300,
+              width: double.infinity,
+              height: 500,
               fit: BoxFit.contain,
             ),
             
