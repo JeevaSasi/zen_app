@@ -533,4 +533,22 @@ class ApiService {
       };
     }
   }
+
+  Future<Map<String, dynamic>> getAllUsers() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final sessionId = prefs.getString('session_id');
+      
+      final response = await _dio.post('/admin/get-users.php',data: {
+        'session_id': sessionId,
+      });
+      return response.data;
+    } catch (e) {
+      print('Error fetching users: $e');
+      return {
+        'success': false,
+        'error': 'Something went wrong. Please try again.',
+      };
+    }
+  }
 } 

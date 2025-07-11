@@ -71,13 +71,14 @@ class _HomeScreenState extends State<HomeScreen> {
             // const OrderHistoryScreen(),
             const AchievementsScreen(),
             const MoreScreen(),
+            if (_isAdmin) const AdminSettingsScreen(),
           ],
           onPageChanged: (index) {
             setState(() => _currentIndex = index);
           },
         ),
         bottomNavigationBar: Padding(
-          padding: const EdgeInsets.only(bottom: 5,left: 80,right: 80),
+          padding: const EdgeInsets.all(10),
           child: CrystalNavigationBar(
             currentIndex: _currentIndex,
             itemPadding: const EdgeInsets.all(6),
@@ -131,12 +132,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 unselectedIcon: Icons.more_horiz_outlined,
                 selectedColor: Theme.of(context).colorScheme.primary,
               ),
-              // if (_isAdmin)
-              //   CrystalNavigationBarItem(
-              //     icon: Icons.admin_panel_settings,
-              //     unselectedIcon: Icons.admin_panel_settings_outlined,
-              //     selectedColor: Theme.of(context).colorScheme.primary,
-              //   ),
+              if (_isAdmin)
+                CrystalNavigationBarItem(
+                  icon: Icons.admin_panel_settings,
+                  unselectedIcon: Icons.admin_panel_settings_outlined,
+                  selectedColor: Theme.of(context).colorScheme.primary,
+                ),
             ],
           ),
         ),
